@@ -85,4 +85,11 @@ res <- tbl_df(flatten(res))
 res %>% knitr::kable()
 ```
 
+## Session Info
+
+```{r session_info}
+devtools::session_info()
+```
+
+
 
