@@ -1,0 +1,88 @@
+---
+output: rmarkdown::github_document
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "##",
+  message = FALSE,
+  warning = FALSE,
+  error = FALSE,
+  fig.retina=2,
+  fig.path = "README-"
+)
+```
+
+`sodrepos` — Collect information about `spaghetti-open-data` repos using `ghql`
+
+### Todo: 
+ - Get the date of the first and last commit
+
+## Load libraries
+
+```{r setup}
+library("dplyr")
+library("httr")
+library("jsonlite")
+library("ghql")
+
+options(stringsAsFactors = FALSE)
+
+```
+
+## Initialize Client
+
+```{r initialize_client}
+token <- Sys.getenv("GITHUB_GRAPHQL_TOKEN")
+
+cli <- graphql(
+  url = "https://api.github.com/graphql",
+  headers = add_headers(Authorization = paste0("Bearer ", token))
+)
+```
+
+## Building Query
+
+```{r building_query}
+cli$query('
+{
+  repositoryOwner(login: "spaghetti-open-data") {
+    repositories(first:30, orderBy: {field:PUSHED_AT, direction:DESC}) {
+      edges {
+        node {
+          name
+          isFork
+          homepageURL
+          stargazers{
+            totalCount
+          }
+          watchers{
+            totalCount
+          }
+          }
+        }
+      }
+    }
+  }
+')
+```
+
+
+```{r show_query}
+cli$query_string
+```
+
+```{r exec_query}
+res <- cli$exec()
+res <- res$data$repositoryOwner$repositories$edges$node
+res <- tbl_df(flatten(res))
+```
+
+## Result
+
+```{r result}
+res %>% knitr::kable()
+```
+
+
